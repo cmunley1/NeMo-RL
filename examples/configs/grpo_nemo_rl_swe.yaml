@@ -1,0 +1,58 @@
+defaults: "grpo_math_1B.yaml"
+
+grpo:
+  num_prompts_per_step: 16 #32
+  num_generations_per_prompt: 4 #16
+  max_rollout_turns: 20 #50
+  max_num_steps: 2000 #10000
+
+checkpointing:
+  enabled: true
+  checkpoint_dir: "results/grpo-nemo-rl-swe"
+  metric_name: "nemo_rl_swe_success_rate"
+  higher_is_better: true
+  keep_top_k: 3
+  save_period: 10
+
+policy:
+  model_name: "Qwen/Qwen2.5-1.5B-Instruct"
+  max_total_sequence_length: 4096  
+
+  generation:
+    backend: "vllm"
+    max_new_tokens: ${policy.max_total_sequence_length}
+    temperature: 1.0
+    # Setting top_p/top_k to 0.999/10000 to strip out Qwen's special/illegal tokens
+    # https://github.com/NVIDIA/NeMo-RL/issues/237
+    top_p: 0.999
+    top_k: 10000
+    stop_token_ids: null
+    stop_strings: null # ["</action>"]
+    vllm_cfg:
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.6
+      max_model_len: ${policy.max_total_sequence_length}
+
+data:
+  add_system_prompt: false
+ 
+env:
+  nemo_rl_swe:
+    cfg:
+      task_config:
+        repo_url: "https://github.com/NVIDIA/NeMo-RL.git"
+      max_tool_calls: 20
+
+logger:
+  log_dir: "logs"
+  num_val_samples_to_print: 0
+  wandb_enabled: false
+  tensorboard_enabled: false
+  monitor_gpus: false
+  wandb:
+    project: "grpo-dev"
+    name: "grpo-dev-nemo_rl_swe"
+  tensorboard: {}
+  gpu_monitoring:
+    collection_interval: 10
+    flush_interval: 10 
