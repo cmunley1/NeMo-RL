@@ -14,15 +14,17 @@
 
 import copy
 import random
+import uuid
 from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 import ray
 import torch
 import os
 import subprocess
-from openai import OpenAI #FIXME: replace with policy
+from openai import OpenAI #FIXME: use policy
 import ast
 import re
+import tempfile
 
 from nemo_rl.data.interfaces import LLMMessageLogType
 from nemo_rl.distributed.batched_data_dict import BatchedDataDict
@@ -33,9 +35,10 @@ from nemo_rl.environments.interfaces import (
 )
 
 # insert bug with llm
+# FIXME: use policy
 def generate_bug_with_llm(file_content, bug_type):
     """
-    Generate a bug in the provided code using NVDev endpoint. FIXME: use policy
+    Generate a bug in the provided code using NVDev endpoint. 
     
     Args:
         file_content (str): The content of the file to inject a bug into
@@ -247,7 +250,8 @@ class NemoRLSWETaskLogic:
         """Generate a new task state including an injected bug, failing tests."""
         repo_url = config["repo_url"]
         
-        repo_path = os.path.join(os.getcwd(), "temp_repo")
+        unique_id = str(uuid.uuid4())[:8]
+        repo_path = os.path.join(tempfile.gettempdir(), f"nemo_rl_swe_{unique_id}")
         clone_command = f"git clone {repo_url} {repo_path}"
         subprocess.run(clone_command, shell=True, check=True)
         
