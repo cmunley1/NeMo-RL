@@ -244,29 +244,34 @@ def main():
         policy,
         policy_generation,
         cluster,
-        task_to_env,
+        dataloader,
+        val_dataloader,
+        loss_fn,
+        logger,
+        checkpointer,
+        grpo_state,
+        master_config,
+    ) = setup(
+        config,
+        tokenizer,
         dataset,
         val_dataset,
-        val_task_to_env,
-    ) = setup(
-        config=config,
-        dataset=dataset,
-        val_dataset=val_dataset,
-        task_to_env=task_to_env,
-        val_task_to_env=val_task_to_env,
-        tokenizer=tokenizer,
     )
 
     print("🚀 Starting GRPO training...")
     grpo_train(
-        config=config,
-        model=policy,
-        policy_generation=policy_generation,
-        cluster=cluster,
-        dataset=dataset,
-        val_dataset=val_dataset,
-        task_to_env=task_to_env,
-        val_task_to_env=val_task_to_env,
+        policy,
+        policy_generation,
+        dataloader,
+        val_dataloader,
+        tokenizer,
+        loss_fn,
+        task_to_env,
+        val_task_to_env,
+        logger,
+        checkpointer,
+        grpo_state,
+        master_config,
     )
 
 
