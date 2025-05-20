@@ -90,28 +90,12 @@ class ScrabbleGameLogic:
     @staticmethod
     def _load_dictionary(dictionary_path: str) -> Set[str]:
         """Load the dictionary from the specified path."""
-        try:
-            with open(dictionary_path, 'r') as f:
-                # Filter out words with apostrophes, hyphens, and proper nouns (capitalized)
-                words = {word.strip().upper() for word in f 
-                         if word.strip() and "'" not in word and "-" not in word
-                         and not word[0].isupper() and len(word.strip()) > 1}
-            return words
-        except FileNotFoundError:
-            # Fall back to a smaller set of common words if dictionary file not found
-            print(f"Warning: Dictionary file {dictionary_path} not found. Using default word list.")
-            common_words = {"THE", "OF", "AND", "TO", "IN", "IS", "YOU", "THAT", "IT", "HE",
-                          "WAS", "FOR", "ON", "ARE", "AS", "WITH", "HIS", "THEY", "AT", "BE",
-                          "THIS", "HAVE", "FROM", "OR", "ONE", "HAD", "BY", "WORD", "BUT", "NOT",
-                          "WHAT", "ALL", "WERE", "WE", "WHEN", "YOUR", "CAN", "SAID", "THERE",
-                          "USE", "AN", "EACH", "WHICH", "SHE", "DO", "HOW", "THEIR", "IF", "WILL",
-                          "UP", "OTHER", "ABOUT", "OUT", "MANY", "THEN", "THEM", "THESE", "SO",
-                          "SOME", "HER", "WOULD", "MAKE", "LIKE", "HIM", "INTO", "TIME", "HAS",
-                          "LOOK", "TWO", "MORE", "WRITE", "GO", "SEE", "NUMBER", "NO", "WAY",
-                          "COULD", "PEOPLE", "MY", "THAN", "FIRST", "WATER", "BEEN", "CALL",
-                          "WHO", "OIL", "ITS", "NOW", "FIND", "LONG", "DOWN", "DAY", "DID", "GET",
-                          "COME", "MADE", "MAY", "PART"}
-            return common_words
+        with open(dictionary_path, 'r') as f:
+            # Filter out words with apostrophes, hyphens, and proper nouns (capitalized)
+            words = {word.strip().upper() for word in f 
+                        if word.strip() and "'" not in word and "-" not in word
+                        and not word[0].isupper() and len(word.strip()) > 1}
+        return words
             
     @staticmethod
     def generate(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -393,8 +377,8 @@ class ScrabbleGameLogic:
                 if len(parts) < 5:
                     return "Invalid play format. Use: play row col direction word", 0.0, False, new_state
                 
-                row = int(parts[1]) - 1  # Convert to 0-indexed
-                col = int(parts[2]) - 1  # Convert to 0-indexed
+                row = int(parts[1]) - 1  
+                col = int(parts[2]) - 1  
                 direction = parts[3].lower()
                 word = ''.join(parts[4:]).upper()  # Join remaining parts as the word
                 
