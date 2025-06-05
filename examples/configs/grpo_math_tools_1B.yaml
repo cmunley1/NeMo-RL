@@ -1,6 +1,4 @@
-# GRPO Configuration for Math Tools Environment
 
-# GRPO algorithm configuration
 grpo:
   num_prompts_per_step: 16
   num_generations_per_prompt: 4
@@ -38,7 +36,7 @@ policy:
   train_micro_batch_size: 2
   generation_batch_size: 16
   logprob_batch_size: 2
-  max_total_sequence_length: 2048  # Increased for multi-turn interactions
+  max_total_sequence_length: 2048
   precision: "bfloat16"
   fsdp_offload_enabled: false
   activation_checkpointing_enabled: true

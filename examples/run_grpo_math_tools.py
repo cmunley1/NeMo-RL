@@ -52,21 +52,16 @@ OmegaConf.register_new_resolver("mul", lambda a, b: a * b)
 
 
 def parse_args() -> tuple[argparse.Namespace, list[str]]:
-    """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Run GRPO training with math tools environment")
     parser.add_argument(
         "--config", type=str, default=None, help="Path to YAML config file"
     )
 
-    # Parse known args for the script
     args, overrides = parser.parse_known_args()
 
     return args, overrides
 
 
-# ===============================================================================
-#                             Math Tools Data Processor
-# ===============================================================================
 TokenizerType = PreTrainedTokenizerBase
 
 
@@ -77,16 +72,12 @@ def math_tools_data_processor(
     max_seq_length: int,
     idx: int,
 ) -> DatumSpec:
-    """Process a datum dictionary for the Math Tools Environment."""
-    # Extract problem and solution from messages format
     user_message = datum_dict["messages"]
     problem = user_message[0]["content"]
     ground_truth = user_message[1]["content"]
     
-    # Create working directory for this problem
     working_dir = create_working_directory()
     
-    # Create metadata for the environment
     extra_env_info = MathToolsMetadata(
         problem_id=datum_dict.get("problem_id", f"problem_{idx}"),
         problem_text=problem,
@@ -101,7 +92,6 @@ def math_tools_data_processor(
 
     message_log: LLMMessageLogType = []
     
-    # Add system prompt if specified
     if task_data_spec.system_prompt:
         sys_prompt: dict[str, str | torch.Tensor] = {
             "role": "system",
@@ -116,7 +106,6 @@ def math_tools_data_processor(
         sys_prompt["token_ids"] = tokenizer(sys, return_tensors="pt")["input_ids"][0]
         message_log.append(sys_prompt)
     
-    # Format user message with prompt template
     if task_data_spec.prompt:
         formatted_problem = task_data_spec.prompt.format(problem=problem)
     else:
@@ -137,7 +126,6 @@ def math_tools_data_processor(
 
     loss_multiplier = 1.0
     if length > max_seq_length:
-        # Truncate if too long
         for chat_message in message_log:
             chat_message["token_ids"] = chat_message["token_ids"][
                 : min(4, max_seq_length // len(message_log))
@@ -166,16 +154,14 @@ def setup_data(
     dict[str, EnvironmentInterface],
     dict[str, EnvironmentInterface],
 ]:
-    print("\n▶ Setting up math tools data...")
+    print("\n▶ Setting up math tools data")
     
-    # Create task specification
     math_tools_task_spec = TaskDataSpec(
         task_name="math_tools",
         prompt_file=data_config.get("prompt_file"),
         system_prompt_file=data_config.get("system_prompt_file"),
     )
 
-    # Load dataset
     if data_config["dataset_name"] == "OpenMathInstruct-2":
         print("Loading nvidia/OpenMathInstruct2Dataset for training and validation")
         data: Any = OpenMathInstruct2Dataset()
@@ -185,20 +171,17 @@ def setup_data(
     else:
         raise ValueError(f"No processor for dataset {data_config['dataset_name']}.")
 
-    # Set up task data processors
     task_data_processors: dict[str, tuple[TaskDataSpec, TaskDataProcessFnCallable]] = {
         "math": (math_tools_task_spec, math_tools_data_processor)
     }
 
-    # Create math tools environment
-    math_tools_env = MathToolsEnvironment.options(  # type: ignore # it's wrapped with ray.remote
+    math_tools_env = MathToolsEnvironment.options(  # type: ignore
         runtime_env={
             "py_executable": PY_EXECUTABLES.SYSTEM,
-            "env_vars": dict(os.environ),  # Pass through all user environment variables
+            "env_vars": dict(os.environ),
         }
     ).remote(env_configs["math_tools"])
     
-    # Create datasets
     dataset = AllTaskProcessedDataset(
         data.formatted_ds["train"],
         tokenizer,
@@ -217,7 +200,6 @@ def setup_data(
             max_seq_length=data_config["max_input_seq_length"],
         )
 
-    # Create environment mapping
     task_to_env: dict[str, EnvironmentInterface] = {
         "math": math_tools_env
     }
@@ -226,8 +208,6 @@ def setup_data(
 
 
 def main() -> None:
-    """Main entry point."""
-    # Parse arguments
     args, overrides = parse_args()
 
     if not args.config:
@@ -245,11 +225,9 @@ def main() -> None:
     config: MasterConfig = OmegaConf.to_container(config, resolve=True)
     print("Applied CLI overrides")
 
-    # Print config
     print("Final config:")
     pprint.pprint(config)
 
-    # Get the next experiment directory with incremented ID
     config["logger"]["log_dir"] = get_next_experiment_dir(config["logger"]["log_dir"])
     print(f"📊 Using log directory: {config['logger']['log_dir']}")
     if config["checkpointing"]["enabled"]:
@@ -259,7 +237,6 @@ def main() -> None:
 
     init_ray()
 
-    # setup tokenizer
     tokenizer = get_tokenizer(config["policy"]["tokenizer"])
     assert config["policy"]["generation"] is not None, (
         "A generation config is required for GRPO"
@@ -268,7 +245,6 @@ def main() -> None:
         config["policy"]["generation"], tokenizer
     )
 
-    # setup data
     (
         dataset,
         val_dataset,
